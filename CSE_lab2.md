@@ -99,9 +99,17 @@ x = 2
 
 ##### 3、如果程序正常中值，x, y, z的最终值可能是多少（对z的赋值操作是不具有原子性的）
 
-z
+z = 1，2，3
 
+y = 3
 
+x = 3
+
+由于z不具有原子性，因而在读取z的值的情况有3种
+
+``` z = z+1 ```读取了 ```z = 0```，```z = z+2``` 也读取了``` z = 0```，前者先发生，后者后发生时，答案为``` 2```，反之为``` 1```
+
+```z = z+1```,``` z = z+2``` 依序正常读取（先后无关），答案为``` 3```
 
 #### Exercise 3:
 
@@ -150,4 +158,44 @@ release(int number){
 哲学家吃饭问题：
 
 5个哲学家围坐在⼀起吃饭（eating）和思考（thinking）。有5只叉⼦可以供他们共享，每个哲学家需 要拿起身旁的2只叉⼦进⾏吃饭，吃完之后会放下叉⼦，进⾏思考，然后叉⼦会被别的哲学家使⽤。 使⽤Java语⾔模拟上述场景，保证每个哲学家都能吃到饭，同时避免死锁。
+
+具体代码见src文件
+
+部分代码解释
+
+```java
+    @Override
+    public void run() {
+        try {
+            while (true) {
+                doAction(System.nanoTime() + ": Thinking"); // thinking
+                // your code
+                /* 思路如下：
+               	 *   产生所有哲学家都进入想要别人的叉子的死锁状况，存在于当每个哲学家都拿了下一位/上一位哲学家空着的手的叉子，即所有人都拿了左手/右手的叉子。为了避免这种情况，我们可以将哲学家分类为奇数和偶数，这样一来，奇数和偶数的哲学家交替，分别先拿左手/右手的叉子，便不会出现连续的哲学家拿了相同手的叉子而渴望对方拿了的叉子而产生的死锁
+               	 */	
+                if (num % 2 == 0) {
+                    //对于编号为偶数的哲学家，他们先举起右手的叉子
+                    synchronized (leftFork) {
+                        pick_left();
+                        synchronized (rightFork) {
+                            pick_right();
+                            eat();
+                        }
+                    }
+                } else {
+                    //对于编号为奇数的哲学家，他们先举起左手的叉子
+                    synchronized (rightFork) {
+                        pick_right();
+                        synchronized (leftFork) {
+                            pick_left();
+                            eat();
+                        }
+                    }
+                }
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+```
 
